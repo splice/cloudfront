@@ -10,7 +10,7 @@ if err != nil {
 	log.Fatal(err)
 }
 
-url, err := signer.SignedURL("/images/image.jpg", time.Now().Add(5*time.Minute))
+url, err := signer.SignedURL("/images/image.jpg", 5*time.Minute)
 if err != nil {
 	log.Fatal(err)
 }

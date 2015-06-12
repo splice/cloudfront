@@ -19,6 +19,7 @@ type Signer struct {
 	key     *rsa.PrivateKey
 	ID      string
 	baseURL string
+	now     time.Time
 }
 
 // NewSigner loads the private key from the pem file at the provided path.
@@ -52,8 +53,8 @@ func (s *Signer) URL(path string) string {
 // The path should be relative to the configured origin. E.g. if the origin is
 // defined as s3-yourbucket/images, then you would omit "/images" from the path
 // that you want to sign.
-func (s *Signer) SignedURL(path string, expires time.Time) (string, error) {
-	req := &Request{URL: s.URL(path), Expires: expires.Unix()}
+func (s *Signer) SignedURL(path string, expiration time.Duration) (string, error) {
+	req := &Request{URL: s.URL(path), Expires: s.time(expiration).Unix()}
 	sig, err := s.sig(req.CannedPolicy())
 	if err != nil {
 		return "", err
@@ -74,4 +75,20 @@ func (s *Signer) sig(policy string) (string, error) {
 
 	var r = strings.NewReplacer("=", "_", "+", "-", "/", "~")
 	return r.Replace(base64.StdEncoding.EncodeToString(signed)), nil
+}
+
+// SetTime lets you fix "now" to a predetermined time.
+// This is only useful for debugging.
+func (s *Signer) SetTime(t time.Time) {
+	if s == nil {
+		return
+	}
+	s.now = t
+}
+
+func (s *Signer) time(d time.Duration) time.Time {
+	if s != nil && !s.now.IsZero() {
+		return s.now.Add(d)
+	}
+	return time.Now().Add(d)
 }
