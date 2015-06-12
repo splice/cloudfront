@@ -54,6 +54,9 @@ func (s *Signer) URL(path string) string {
 // defined as s3-yourbucket/images, then you would omit "/images" from the path
 // that you want to sign.
 func (s *Signer) SignedURL(path string, expiration time.Duration) (string, error) {
+	if s == nil {
+		return "", nil
+	}
 	req := &Request{URL: s.URL(path), Expires: s.time(expiration).Unix()}
 	sig, err := s.sig(req.CannedPolicy())
 	if err != nil {
