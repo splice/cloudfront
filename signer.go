@@ -22,16 +22,11 @@ type Signer struct {
 	now     time.Time
 }
 
-// NewSigner loads the private key from the pem file at the provided path.
+// NewSigner takes in a private key in the form of byte slice.
 // In order to sign URLs, it also needs the id of the key pair, as well
 // as the base url of the distribution.
-func NewSigner(path, kpID, url string) (*Signer, error) {
-	b, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	block, _ := pem.Decode(b)
+func NewSigner(key []byte, kpID, url string) (*Signer, error) {
+	block, _ := pem.Decode(key)
 	pk, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, err
@@ -42,6 +37,17 @@ func NewSigner(path, kpID, url string) (*Signer, error) {
 	}
 
 	return &Signer{key: pk, ID: kpID, baseURL: url}, nil
+}
+
+// NewSignerFromPath reads a private key from the file system and
+// returns a signer.
+func NewSignerFromPath(keyPath string, kpID, url string) (*Signer, error) {
+	b, err := ioutil.ReadFile(keyPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewSigner(b, kpID, url)
 }
 
 // URL is the unsigned url for the given path.
